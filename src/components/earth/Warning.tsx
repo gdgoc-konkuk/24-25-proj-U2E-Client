@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import styled, { keyframes } from "styled-components";
 
 import WarningIcon from "../../assets/svgs/Warning.svg?react";
@@ -11,31 +11,48 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface WarningProps {
   pin: Pin;
+  onHoverChange?: (isHovered: boolean) => void;
 }
 
-const Warning = ({ pin }: WarningProps) => {
+const Warning = ({ pin, onHoverChange }: WarningProps) => {
   const [searchParams] = useSearchParams();
   const filterParam = searchParams.get("filter");
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
 
+  const handleMouseEnter = () => {
+    setHovered(true);
+    onHoverChange?.(true);
+  };
+
+  const handleMouseLeave = () => {
+    setHovered(false);
+    onHoverChange?.(false);
+  };
+
   const climate =
     filterParam && pin.climateProblem.includes(filterParam as Climate)
-      ? filterParam
+      ? (filterParam as Climate)
       : pin.climateProblem[0];
-  const ClimateIcon = climateIcons.find((item) => climate === item.id)?.icon;
-  const ClimateTitle = climateIcons.find((item) => climate === item.id)?.label;
+
+  const climateInfo = useMemo(
+    () => climateIcons.find((item) => climate === item.id),
+    [climate]
+  );
+
+  const ClimateIcon = climateInfo?.icon;
+  const ClimateTitle = climateInfo?.label;
 
   return (
     <Container>
       <IconWrapper
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onClick={() => navigate(`news-detail/${pin.pinId}`)}
       >
-        <GlowLayer $visible={hovered} />
+        <GlowLayer />
         <WarningIconStyled />
-        <MiniCard $visible={hovered}>
+        <MiniCard>
           <Title>
             {ClimateTitle}
             {ClimateIcon && (
@@ -61,63 +78,7 @@ const Container = styled.div`
   ${rowFlex({ align: "center", justify: "center" })}
 `;
 
-const IconWrapper = styled.div`
-  position: relative;
-  width: 50px;
-  height: 50px;
-  cursor: pointer;
-  z-index: 99;
-  svg {
-    width: 100%;
-    height: 100%;
-  }
-  &:hover > div {
-    opacity: 1;
-    transform: translateY(-12px);
-    pointer-events: auto;
-  }
-`;
-
-const glowFade = keyframes`
-  0% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-`;
-
-const GlowLayer = styled.div<{ $visible: boolean }>`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 199, 78, 0.5) 20%,
-    transparent 70%
-  );
-  z-index: 0;
-  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
-  pointer-events: none;
-  animation: ${({ $visible }) => ($visible ? glowFade : "none")} 2.5s
-    ease-in-out infinite;
-  transition: all 0.5s ease;
-`;
-
-const WarningIconStyled = styled(WarningIcon)`
-  width: 100%;
-  height: 100%;
-  z-index: 10;
-`;
-
-const MiniCard = styled.div<{ $visible: boolean }>`
+const MiniCard = styled.div`
   position: absolute;
   left: 80px;
   top: -30px;
@@ -130,12 +91,16 @@ const MiniCard = styled.div<{ $visible: boolean }>`
   white-space: nowrap;
   font-weight: bold;
   font-size: 16px;
-  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
-  pointer-events: ${({ $visible }) => ($visible ? "auto" : "none")};
-  transform: translateY(${({ $visible }) => ($visible ? "-12px" : "0")});
-  transition: all 0.5s ease;
-  z-index: 999;
+  z-index: 2; // 컨테이너 안에서만 위로
   backdrop-filter: blur(4px);
+
+  /* ✅ 기본값: 안 보이고 클릭도 안 됨 */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0);
+
+  /* ✅ transition은 필요한 속성만 지정 */
+  transition: opacity 0.5s ease, transform 0.5s ease;
 
   &::after {
     content: "";
@@ -148,6 +113,67 @@ const MiniCard = styled.div<{ $visible: boolean }>`
     border-right: 10px solid rgba(0, 8, 23, 0.75);
     border-left: none;
   }
+`;
+
+const glowFade = keyframes`
+  0% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+`;
+
+const GlowLayer = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 199, 78, 0.5) 20%,
+    transparent 70%
+  );
+  z-index: 0;
+  opacity: 0;
+  animation: ${glowFade} 2.5s ease-in-out infinite;
+  transition: opacity 0.5s ease;
+`;
+
+const IconWrapper = styled.div`
+  position: relative;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* MiniCard hover 시 노출/위치 이동 */
+  &:hover ${MiniCard} {
+    opacity: 1;
+    transform: translateY(-12px);
+    pointer-events: auto;
+  }
+
+  /* GlowLayer는 hover 시에만 보여주기 */
+  &:hover ${GlowLayer} {
+    opacity: 1;
+  }
+`;
+
+const WarningIconStyled = styled(WarningIcon)`
+  width: 100%;
+  height: 100%;
+  z-index: 1;
 `;
 
 const AnimationContainer = styled.div`
