@@ -45,7 +45,9 @@ const Warning = ({ pin }: WarningProps) => {
             )}
           </Title>
           <AnimationContainer>
-            <DetailAnimation dropNum={50} dropSpeed={2} boundary={20} />
+            {hovered && (
+              <DetailAnimation dropNum={50} dropSpeed={2} boundary={20} />
+            )}
           </AnimationContainer>
         </MiniCard>
       </IconWrapper>
