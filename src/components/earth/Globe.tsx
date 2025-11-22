@@ -76,13 +76,6 @@ const Globe = ({ pinList }: GlobeProps) => {
     const globeWireframe = new THREE.LineSegments(edges, lineMaterial);
     globeGroup.add(globeWireframe);
 
-    // 내부를 검은색으로 채워 뒤쪽 라인이 덜 보이게 처리 (선택 사항)
-    // 반지름을 약간 작게 설정하여 라인이나 지도가 가려지지 않도록 함
-    const blackGlobeGeometry = new THREE.SphereGeometry(1.98, 32, 32);
-    const fillMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-    const globeMesh = new THREE.Mesh(blackGlobeGeometry, fillMaterial);
-    globeGroup.add(globeMesh);
-
     // Stars
     const stars = generateStarfield({ numStars: 1000 });
     scene.add(stars);
@@ -115,7 +108,7 @@ const Globe = ({ pinList }: GlobeProps) => {
 
       if (cameraRef.current && rendererRef.current && sceneRef.current) {
         const camera = cameraRef.current;
-        
+
         // 카메라 위치 캐싱
         cameraPos.copy(camera.position);
 
@@ -131,7 +124,7 @@ const Globe = ({ pinList }: GlobeProps) => {
           // 지구 중심(0,0,0)에서 핀까지의 벡터(meshPos - 0)는 meshPos 그 자체 (정규화 필요)
           meshNormal.copy(meshPos).normalize();
           vectorToCamera.subVectors(cameraPos, meshPos).normalize();
-          
+
           const dot = meshNormal.dot(vectorToCamera);
           const isFacingCamera = dot > 0.1; // 여유값
 
@@ -146,17 +139,17 @@ const Globe = ({ pinList }: GlobeProps) => {
               tempV.x >= -1 && tempV.x <= 1 && tempV.y >= -1 && tempV.y <= 1;
 
             if (isInFrustum) {
-              const x = (tempV.x * 0.5 + 0.5) * width;
-              const y = (tempV.y * -0.5 + 0.5) * height;
+              const x = (tempV.x * 0.5 + 0.5) * window.innerWidth;
+              const y = (tempV.y * -0.5 + 0.5) * window.innerHeight;
 
               el.style.transform = `translate(-50%, -50%) translate3d(${x}px, ${y}px, 0)`;
               el.style.opacity = "1";
               el.style.pointerEvents = "auto";
-              el.style.zIndex = "1000";
+              el.style.zIndex = "1";
             } else {
-               el.style.opacity = "0";
-               el.style.pointerEvents = "none";
-               el.style.zIndex = "-1";
+              el.style.opacity = "0";
+              el.style.pointerEvents = "none";
+              el.style.zIndex = "-1";
             }
           } else {
             el.style.opacity = "0";
@@ -175,7 +168,7 @@ const Globe = ({ pinList }: GlobeProps) => {
       if (!container || !cameraRef.current || !rendererRef.current) return;
       const newWidth = window.innerWidth;
       const newHeight = window.innerHeight;
-      
+
       cameraRef.current.aspect = newWidth / newHeight;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(newWidth, newHeight);
@@ -185,9 +178,14 @@ const Globe = ({ pinList }: GlobeProps) => {
     // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize);
-      if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
-      
-      if (container && rendererRef.current && container.contains(rendererRef.current.domElement)) {
+      if (animationFrameIdRef.current)
+        cancelAnimationFrame(animationFrameIdRef.current);
+
+      if (
+        container &&
+        rendererRef.current &&
+        container.contains(rendererRef.current.domElement)
+      ) {
         container.removeChild(rendererRef.current.domElement);
       }
 
@@ -195,9 +193,9 @@ const Globe = ({ pinList }: GlobeProps) => {
       globeGeometry.dispose();
       lineMaterial.dispose();
       edges.dispose();
-      fillMaterial.dispose();
+
       // Note: GeoMap and Stars disposal logic might need to be added to their respective modules or handled here if they return disposables.
-      
+
       rendererRef.current?.dispose();
     };
   }, []); // Empty dependency array: run once
@@ -218,11 +216,10 @@ const Globe = ({ pinList }: GlobeProps) => {
       const pinObj = new THREE.Object3D();
       pinObj.position.copy(latLonToVector3(pin.latitude, pin.longitude, 2.0));
       pinObj.lookAt(new THREE.Vector3(0, 0, 0));
-      
+
       globeGroup.add(pinObj);
       pinObjsRef.current.push({ mesh: pinObj, data: pin });
     });
-
   }, [pinList]);
 
   return (
@@ -259,9 +256,6 @@ const PinOverlayPositioner = styled.div`
   top: 0;
   left: 0;
   will-change: transform, opacity; /* 브라우저에게 최적화 힌트 제공 */
-  z-index: 1000;
-  /* 초기에는 숨김 처리 */
-  opacity: 0;
   pointer-events: none;
 `;
 
