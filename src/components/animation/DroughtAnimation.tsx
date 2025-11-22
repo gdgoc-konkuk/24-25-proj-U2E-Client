@@ -9,12 +9,16 @@ interface WaterDrop {
   radius: number;
 }
 
+// [Optimization 1] Reduce resolution: 180 -> 90 (Vertex count reduced by 4x)
+const SEGMENTS = 90;
+
 const DroughtAnimation = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
   const timeRef = useRef(0);
   const waterDropsRef = useRef<WaterDrop[]>([]);
   const droughtProgressRef = useRef(0);
+  const frameCountRef = useRef(0); // [Optimization] Counter for throttling
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -35,6 +39,7 @@ const DroughtAnimation = () => {
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: false,
+      powerPreference: "high-performance", // [Optimization] Request high performance
     });
     renderer.setSize(
       containerRef.current.clientWidth,
@@ -67,22 +72,22 @@ const DroughtAnimation = () => {
     sunLight.shadow.camera.bottom = -20;
     scene.add(sunLight);
 
-    // Ground with extreme broccoli-like bumpy terrain
+    // Ground with optimized segments
     const groundSize = 18;
     const groundGeometry = new THREE.PlaneGeometry(
       groundSize,
       groundSize,
-      180,
-      180
+      SEGMENTS,
+      SEGMENTS
     );
     const vertices = groundGeometry.attributes.position.array;
+    const vertexCount = vertices.length / 3;
 
     // Create broccoli-like bumpy forest terrain
     for (let i = 0; i < vertices.length; i += 3) {
       const x = vertices[i];
       const y = vertices[i + 1];
 
-      // Multiple layers of noise for broccoli effect
       const largeNoise = Math.sin(x * 0.3) * Math.cos(y * 0.3) * 0.8;
       const mediumNoise = Math.sin(x * 0.8) * Math.cos(y * 0.8) * 0.5;
       const smallNoise = Math.sin(x * 2) * Math.cos(y * 2) * 0.3;
@@ -93,25 +98,25 @@ const DroughtAnimation = () => {
     groundGeometry.attributes.position.needsUpdate = true;
     groundGeometry.computeVertexNormals();
 
-    // Store original heights
-    const originalHeights = new Float32Array(vertices.length / 3);
+    // Store original heights using Float32Array
+    const originalHeights = new Float32Array(vertexCount);
     for (let i = 0; i < vertices.length; i += 3) {
       originalHeights[i / 3] = vertices[i + 2];
     }
 
-    // Vertex colors - deep forest green
+    // Vertex colors
     const colors = new Float32Array(vertices.length);
     for (let i = 0; i < colors.length; i += 3) {
       const variation = Math.random() * 0.08;
-      colors[i] = 0.15 + variation; // R - darker
-      colors[i + 1] = 0.5 + variation; // G - deep green
-      colors[i + 2] = 0.1 + variation; // B - darker
+      colors[i] = 0.15 + variation;
+      colors[i + 1] = 0.5 + variation;
+      colors[i + 2] = 0.1 + variation;
     }
     groundGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
     const groundMaterial = new THREE.MeshStandardMaterial({
       vertexColors: true,
-      roughness: 0.9, // Forest texture
+      roughness: 0.9,
       metalness: 0.0,
     });
 
@@ -122,11 +127,10 @@ const DroughtAnimation = () => {
     scene.add(ground);
     ground.userData.originalHeights = originalHeights;
 
-    // Generate crack seed points using deterministic random
+    // Pre-compute crack patterns
     const crackSeeds: Array<{ x: number; y: number }> = [];
     const seedCount = 40;
     for (let i = 0; i < seedCount; i++) {
-      // Use sin/cos for deterministic random
       const angle = i * 2.4 + Math.sin(i * 0.7) * 10;
       const radius = (Math.sin(i * 1.3) * 0.5 + 0.5) * 9;
       crackSeeds.push({
@@ -135,20 +139,19 @@ const DroughtAnimation = () => {
       });
     }
 
-    // PRE-COMPUTE crack patterns once (huge performance gain)
-    const crackIntensities = new Float32Array(vertices.length / 3);
+    const crackIntensities = new Float32Array(vertexCount);
     for (let i = 0; i < vertices.length; i += 3) {
       const x = vertices[i];
       const y = vertices[i + 1];
 
-      // Worley/Voronoi edge detection
       let minDist1 = Infinity;
       let minDist2 = Infinity;
 
       for (const seed of crackSeeds) {
         const dx = x - seed.x;
         const dy = y - seed.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const distSq = dx * dx + dy * dy;
+        const dist = Math.sqrt(distSq);
 
         if (dist < minDist1) {
           minDist2 = minDist1;
@@ -163,13 +166,11 @@ const DroughtAnimation = () => {
       if (edgeDistance < 0.15) {
         const crackIntensity = 1 - edgeDistance / 0.15;
         crackIntensities[i / 3] = crackIntensity * crackIntensity;
-      } else {
-        crackIntensities[i / 3] = 0;
       }
     }
     ground.userData.crackIntensities = crackIntensities;
 
-    // Dust particles
+    // Particles
     const particleCount = 2000;
     const particleGeometry = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
@@ -299,8 +300,9 @@ const DroughtAnimation = () => {
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
       timeRef.current += 0.01;
+      frameCountRef.current += 1;
 
-      // 5 seconds drought
+      // Drought
       droughtProgressRef.current = Math.min(
         droughtProgressRef.current + 0.0033,
         1
@@ -319,46 +321,42 @@ const DroughtAnimation = () => {
       sunLight.intensity = 1.0 + drought * 1.5;
 
       // Particles
-      const positions = particleGeometry.attributes.position
-        .array as Float32Array;
-      const velocities = particles.userData.velocities as number[];
+      const pPos = particleGeometry.attributes.position.array as Float32Array;
+      const pVel = particles.userData.velocities as number[];
 
       for (let i = 0; i < particleCount; i++) {
-        positions[i * 3 + 1] += velocities[i] * drought * 3;
-        positions[i * 3] += Math.sin(timeRef.current + i) * 0.003 * drought;
-        positions[i * 3 + 2] +=
+        pPos[i * 3 + 1] += pVel[i] * drought * 3;
+        pPos[i * 3] += Math.sin(timeRef.current + i) * 0.003 * drought;
+        pPos[i * 3 + 2] +=
           Math.cos(timeRef.current + i * 0.5) * 0.003 * drought;
 
-        if (positions[i * 3 + 1] > 15) {
-          positions[i * 3 + 1] = 0;
-          positions[i * 3] = (Math.random() - 0.5) * 35;
-          positions[i * 3 + 2] = (Math.random() - 0.5) * 35;
+        if (pPos[i * 3 + 1] > 15) {
+          pPos[i * 3 + 1] = 0;
+          pPos[i * 3] = (Math.random() - 0.5) * 35;
+          pPos[i * 3 + 2] = (Math.random() - 0.5) * 35;
         }
       }
       particleGeometry.attributes.position.needsUpdate = true;
       particleMaterial.opacity = Math.min(drought * 0.8, 0.7);
 
-      // Update water drops (2 seconds)
+      // Update water drops
       waterDropsRef.current = waterDropsRef.current.filter((drop) => {
         drop.age += 0.016;
         drop.radius = Math.min(drop.radius + 0.15, 6);
         return drop.age < 2;
       });
 
-      // Update ground
-      const colors = groundGeometry.attributes.color.array as Float32Array;
+      // Ground update
+      const geoColors = groundGeometry.attributes.color.array as Float32Array;
       const geoPositions = groundGeometry.attributes.position
         .array as Float32Array;
-      const originalHeights = ground.userData.originalHeights as Float32Array;
-      const crackIntensities = ground.userData.crackIntensities as Float32Array;
 
-      // Calculate bounding box for water effects (optimization)
+      // Bounding Box for water
       const hasWater = waterDropsRef.current.length > 0;
       let minWaterX = Infinity,
-        maxWaterX = -Infinity;
-      let minWaterY = Infinity,
+        maxWaterX = -Infinity,
+        minWaterY = Infinity,
         maxWaterY = -Infinity;
-
       if (hasWater) {
         for (const drop of waterDropsRef.current) {
           minWaterX = Math.min(minWaterX, drop.position.x - drop.radius);
@@ -368,46 +366,47 @@ const DroughtAnimation = () => {
         }
       }
 
-      for (let i = 0; i < colors.length; i += 3) {
-        const vertexIndex = i / 3;
-        const posIndex = vertexIndex * 3;
+      // Constants
+      const healthyR = 0.15,
+        healthyG = 0.5,
+        healthyB = 0.1;
+      const dryR = 0.75,
+        dryG = 0.6,
+        dryB = 0.35;
+      const waterGreenR = 0.1,
+        waterGreenG = 0.6,
+        waterGreenB = 0.05;
+
+      const baseTargetR = THREE.MathUtils.lerp(healthyR, dryR, drought);
+      const baseTargetG = THREE.MathUtils.lerp(healthyG, dryG, drought);
+      const baseTargetB = THREE.MathUtils.lerp(healthyB, dryB, drought);
+
+      for (let i = 0; i < vertexCount; i++) {
+        const posIndex = i * 3;
         const x = geoPositions[posIndex];
         const y = geoPositions[posIndex + 1];
 
-        // Deep forest green to dry brown
-        const healthyR = 0.15;
-        const healthyG = 0.5;
-        const healthyB = 0.1;
+        let targetR = baseTargetR;
+        let targetG = baseTargetG;
+        let targetB = baseTargetB;
 
-        const dryR = 0.75;
-        const dryG = 0.6;
-        const dryB = 0.35;
+        const originalHeight = originalHeights[i];
+        let targetHeight = originalHeight * (1 - drought);
 
-        let targetR = THREE.MathUtils.lerp(healthyR, dryR, drought);
-        let targetG = THREE.MathUtils.lerp(healthyG, dryG, drought);
-        let targetB = THREE.MathUtils.lerp(healthyB, dryB, drought);
-
-        // Flatten from broccoli to flat dry land
-        const originalHeight = originalHeights[vertexIndex];
-        let targetHeight = THREE.MathUtils.lerp(originalHeight, 0, drought);
-
-        // Add crack pattern during drought (using pre-computed values)
-        const crackIntensity = crackIntensities[vertexIndex];
+        // Crack
+        const crackIntensity = crackIntensities[i];
         if (drought > 0.3 && crackIntensity > 0) {
           const droughtCrackFactor = Math.max(0, (drought - 0.3) / 0.7);
-          const crackDepth = crackIntensity * droughtCrackFactor * 0.6;
+          const crackFactor = crackIntensity * droughtCrackFactor * 0.6;
 
-          targetHeight -= crackDepth;
-
-          // Darken crack areas
-          const darkenFactor = 1 - crackIntensity * droughtCrackFactor * 0.6;
+          targetHeight -= crackFactor;
+          const darkenFactor = 1 - crackFactor;
           targetR *= darkenFactor;
           targetG *= darkenFactor;
           targetB *= darkenFactor;
         }
 
-        // Water effects - with bounding box optimization
-        let maxWaterEffect = 0;
+        // Water Effects
         if (
           hasWater &&
           x >= minWaterX &&
@@ -415,6 +414,7 @@ const DroughtAnimation = () => {
           y >= minWaterY &&
           y <= maxWaterY
         ) {
+          let maxWaterEffect = 0;
           for (const drop of waterDropsRef.current) {
             const dx = x - drop.position.x;
             const dy = y - drop.position.y;
@@ -424,45 +424,39 @@ const DroughtAnimation = () => {
             if (distSq < radiusSq) {
               const dist = Math.sqrt(distSq);
               const effect = (1 - dist / drop.radius) * (1 - drop.age / 2);
-              maxWaterEffect = Math.max(maxWaterEffect, effect);
+              if (effect > maxWaterEffect) maxWaterEffect = effect;
             }
+          }
+
+          if (maxWaterEffect > 0) {
+            targetR += (waterGreenR - targetR) * maxWaterEffect;
+            targetG += (waterGreenG - targetG) * maxWaterEffect;
+            targetB += (waterGreenB - targetB) * maxWaterEffect;
+            targetHeight +=
+              (originalHeight * 1.3 - targetHeight) * maxWaterEffect;
           }
         }
 
-        if (maxWaterEffect > 0) {
-          // Restore to even deeper green and taller
-          const waterGreenR = 0.1;
-          const waterGreenG = 0.6;
-          const waterGreenB = 0.05;
+        const colorIndex = i * 3;
+        geoColors[colorIndex] += (targetR - geoColors[colorIndex]) * 0.05;
+        geoColors[colorIndex + 1] +=
+          (targetG - geoColors[colorIndex + 1]) * 0.05;
+        geoColors[colorIndex + 2] +=
+          (targetB - geoColors[colorIndex + 2]) * 0.05;
 
-          targetR = THREE.MathUtils.lerp(targetR, waterGreenR, maxWaterEffect);
-          targetG = THREE.MathUtils.lerp(targetG, waterGreenG, maxWaterEffect);
-          targetB = THREE.MathUtils.lerp(targetB, waterGreenB, maxWaterEffect);
-
-          // Make it taller than original
-          targetHeight = THREE.MathUtils.lerp(
-            targetHeight,
-            originalHeight * 1.3,
-            maxWaterEffect
-          );
-        }
-
-        colors[i] = THREE.MathUtils.lerp(colors[i], targetR, 0.05);
-        colors[i + 1] = THREE.MathUtils.lerp(colors[i + 1], targetG, 0.05);
-        colors[i + 2] = THREE.MathUtils.lerp(colors[i + 2], targetB, 0.05);
-
-        geoPositions[posIndex + 2] = THREE.MathUtils.lerp(
-          geoPositions[posIndex + 2],
-          targetHeight,
-          0.05
-        );
+        geoPositions[posIndex + 2] +=
+          (targetHeight - geoPositions[posIndex + 2]) * 0.05;
       }
+
       groundGeometry.attributes.color.needsUpdate = true;
       groundGeometry.attributes.position.needsUpdate = true;
-      groundGeometry.computeVertexNormals();
 
-      // Material roughness: broccoli to dry earth
-      groundMaterial.roughness = THREE.MathUtils.lerp(0.9, 1.0, drought);
+      // [Optimization 2] Throttle normal updates (every 3 frames)
+      if (frameCountRef.current % 3 === 0) {
+        groundGeometry.computeVertexNormals();
+      }
+
+      groundMaterial.roughness = 0.9 + drought * 0.1;
 
       controls.update();
       renderer.render(scene, camera);
@@ -470,7 +464,6 @@ const DroughtAnimation = () => {
 
     animate();
 
-    // Resize
     const handleResize = () => {
       if (!containerRef.current) return;
       camera.aspect =
@@ -483,7 +476,6 @@ const DroughtAnimation = () => {
     };
     window.addEventListener("resize", handleResize);
 
-    // Cleanup
     const container = containerRef.current;
     return () => {
       window.removeEventListener("resize", handleResize);
