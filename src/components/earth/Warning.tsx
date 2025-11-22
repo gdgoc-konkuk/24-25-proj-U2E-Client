@@ -4,9 +4,9 @@ import styled, { keyframes } from "styled-components";
 import WarningIcon from "../../assets/svgs/Warning.svg?react";
 import { rowFlex } from "../../styles/flexStyles";
 import theme from "../../styles/theme";
-import DetailAnimation from "../animation/DetailAnimation";
 import { Climate, Pin } from "../../types/pin";
 import { climateIcons } from "../../constants/climateIcons";
+import { climateMap } from "../../constants/climateMap";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface WarningProps {
@@ -62,9 +62,7 @@ const Warning = ({ pin, onHoverChange }: WarningProps) => {
             )}
           </Title>
           <AnimationContainer>
-            {hovered && (
-              <DetailAnimation dropNum={50} dropSpeed={2} boundary={20} />
-            )}
+            {hovered && climateMap[climate]}
           </AnimationContainer>
         </MiniCard>
       </IconWrapper>
