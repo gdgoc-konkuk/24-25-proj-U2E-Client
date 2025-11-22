@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { colFlex, rowFlex } from "../../styles/flexStyles";
 import theme from "../../styles/theme";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import NewsSideBar from "./NewsSideBar";
 
 interface NewsContentsProps {
@@ -10,6 +10,9 @@ interface NewsContentsProps {
 
 const NewsContents = ({ newsData }: NewsContentsProps) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentFilter = searchParams.get("filter");
+
   const {
     climateList,
     regionList,
@@ -21,6 +24,10 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
     aiSolution,
     aiRelated,
   } = newsData;
+
+  const handleClimateClick = (climate: string) => {
+    setSearchParams({ filter: climate });
+  };
 
   return (
     <PageLayout>
@@ -35,7 +42,13 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
                 <LocationText key={`region-${index}`}>{region}</LocationText>
               ))}
               {climateList.map((climate, index) => (
-                <ClimateTag key={`climate-${index}`}>{climate}</ClimateTag>
+                <ClimateTag
+                  key={`climate-${index}`}
+                  $isActive={currentFilter === climate}
+                  onClick={() => handleClimateClick(climate)}
+                >
+                  {climate}
+                </ClimateTag>
               ))}
             </TagContainer>
           </LocationContainer>
@@ -82,9 +95,9 @@ const LocationContainer = styled.div`
 
 const LocationText = styled.div`
   font-size: 18px;
-  background-color: ${theme.colors.primary};
   padding: 5px 10px;
   border-radius: 15px;
+  border: 1px solid ${theme.colors.white};
 `;
 
 const TagContainer = styled.div`
@@ -92,12 +105,19 @@ const TagContainer = styled.div`
   ${rowFlex({ justify: "center", align: "center" })}
 `;
 
-const ClimateTag = styled.div`
+const ClimateTag = styled.div<{ $isActive: boolean }>`
   font-size: 18px;
-  background-color: ${theme.colors.secondary};
+  background-color: ${({ $isActive }) => $isActive && theme.colors.primary};
   padding: 5px 10px;
   border-radius: 15px;
+  border: 1px solid ${theme.colors.primary};
   color: ${theme.colors.textPrimary};
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${theme.colors.primary};
+  }
 `;
 
 const NavigationArrow = styled.div`

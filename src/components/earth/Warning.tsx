@@ -48,7 +48,7 @@ const Warning = ({ pin, onHoverChange }: WarningProps) => {
       <IconWrapper
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onClick={() => navigate(`news-detail/${pin.newsId}`)}
+        onClick={() => navigate(`news-detail/${pin.newsId}?filter=${climate}`)}
       >
         <GlowLayer />
         <WarningIconStyled />
