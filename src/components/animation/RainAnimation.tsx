@@ -11,17 +11,17 @@ interface Drop {
   velY: number; // y축 방향 속도
 }
 
-interface DetailAnimationProps {
+interface RainAnimationProps {
   dropNum: number;
   dropSpeed?: number;
   boundary?: number;
 }
 
-const DetailAnimation = ({
+const RainAnimation = ({
   dropNum,
   dropSpeed = 6,
   boundary = 100,
-}: DetailAnimationProps) => {
+}: RainAnimationProps) => {
   // 생성할 물방울의 수
   const NUM_DROPS = dropNum;
   // DOM 요소 및 상태를 참조하기 위한 ref 선언
@@ -211,4 +211,4 @@ const CustomCursor = styled.div`
   opacity: 0; /* 초기 상태에서 숨김 */
 `;
 
-export default DetailAnimation;
+export default RainAnimation;

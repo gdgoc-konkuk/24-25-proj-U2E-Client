@@ -4,7 +4,7 @@ import styled, { keyframes } from "styled-components";
 import WarningIcon from "../../assets/svgs/Warning.svg?react";
 import { rowFlex } from "../../styles/flexStyles";
 import theme from "../../styles/theme";
-import DetailAnimation from "../animation/DetailAnimation";
+import RainAnimation from "../animation/RainAnimation";
 import { Climate, Pin } from "../../types/pin";
 import { climateIcons } from "../../constants/climateIcons";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -63,7 +63,7 @@ const Warning = ({ pin, onHoverChange }: WarningProps) => {
           </Title>
           <AnimationContainer>
             {hovered && (
-              <DetailAnimation dropNum={50} dropSpeed={2} boundary={20} />
+              <RainAnimation dropNum={50} dropSpeed={2} boundary={20} />
             )}
           </AnimationContainer>
         </MiniCard>
