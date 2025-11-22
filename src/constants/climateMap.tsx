@@ -3,8 +3,11 @@ import DroughtAnimation from "../components/animation/DroughtAnimation";
 import FineDustAnimation from "../components/animation/FineDustAnimation";
 import { Climate } from "../types/climate";
 
+import EarthquakeAnimation from "../components/animation/EarthquakeAnimation";
+
 export const climateMap: Partial<Record<Climate, React.ReactNode>> = {
   HEAVY_RAIN_OR_FLOOD: <RainAnimation dropNum={400} />,
   DROUGHT_OR_DESERTIFICATION: <DroughtAnimation />,
   FINE_DUST: <FineDustAnimation />,
+  EARTHQUAKE: <EarthquakeAnimation />,
 };
