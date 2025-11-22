@@ -1,35 +1,15 @@
 import styled from "styled-components";
 import theme from "../../styles/theme";
 import { colFlex } from "../../styles/flexStyles";
-import { useEffect, useState } from "react";
-import { getGeminiSolution } from "../../api/geminiApi";
 
 interface NewsSideBarProps {
   newsUrl: string;
-  newsBody: string;
+  aiSolution: string;
+  aiRelated: AIRelated[];
 }
 
-const NewsSideBar = ({ newsUrl, newsBody }: NewsSideBarProps) => {
-  const [solution, setSolution] = useState<string>("");
-  const [relatedNews, setRelatedNews] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  const hasRelatedNews = relatedNews && relatedNews.length > 0;
-
-  useEffect(() => {
-    setIsLoading(true);
-    getGeminiSolution(newsBody)
-      .then((data) => {
-        setSolution(data.solution);
-        setRelatedNews(data.relatedNews);
-      })
-      .catch((error) => {
-        console.error("Error fetching Gemini solution:", error);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [newsBody]);
+const NewsSideBar = ({ newsUrl, aiSolution, aiRelated }: NewsSideBarProps) => {
+  const hasRelatedNews = aiRelated && aiRelated.length > 0;
 
   return (
     <Container>
@@ -43,18 +23,11 @@ const NewsSideBar = ({ newsUrl, newsBody }: NewsSideBarProps) => {
         </LinkCard>
       )}
 
-      {isLoading ? (
-        <LoadingContainer>
-          <LoadingSpinner />
-          <LoadingText>Analyzing news content...</LoadingText>
-        </LoadingContainer>
-      ) : (
-        solution && (
-          <SolutionContainer>
-            <SolutionHeader>Proposed Solutions (by Gemma)</SolutionHeader>
-            <SolutionContent>{solution}</SolutionContent>
-          </SolutionContainer>
-        )
+      {aiSolution && (
+        <SolutionContainer>
+          <SolutionHeader>Proposed Solutions (by Gemma)</SolutionHeader>
+          <SolutionContent>{aiSolution}</SolutionContent>
+        </SolutionContainer>
       )}
 
       {hasRelatedNews && (
@@ -63,10 +36,10 @@ const NewsSideBar = ({ newsUrl, newsBody }: NewsSideBarProps) => {
           <LinkDescription>
             Explore related articles on this topic
           </LinkDescription>
-          {relatedNews.map((news, index) => (
+          {aiRelated.map((news, index) => (
             <RelatedNewsLink
               key={index}
-              href={news}
+              href={news.url}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -172,35 +145,6 @@ const LinkButton = styled.a`
 
   &:hover {
     background-color: ${theme.colors.secondary};
-  }
-`;
-
-const LoadingContainer = styled.div`
-  width: 100%;
-  margin: 30px 0;
-  padding: 20px;
-  ${colFlex({ justify: "center", align: "center" })}
-  gap: 20px;
-`;
-
-const LoadingText = styled.div`
-  font-size: 18px;
-  font-weight: 500;
-  color: ${theme.colors.textSecondary};
-`;
-
-const LoadingSpinner = styled.div`
-  width: 50px;
-  height: 50px;
-  border: 5px solid rgba(0, 99, 166, 0.1);
-  border-top-color: ${theme.colors.primary};
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
   }
 `;
 

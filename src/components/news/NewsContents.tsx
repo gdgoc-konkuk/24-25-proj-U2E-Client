@@ -18,6 +18,8 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
     newsImageUrl,
     newsBody,
     newsDate,
+    aiSolution,
+    aiRelated,
   } = newsData;
 
   return (
@@ -43,7 +45,11 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
         {newsImageUrl && <NewsImage src={newsImageUrl} alt={newsTitle} />}{" "}
         <MainContent>{newsBody}</MainContent>
       </Container>
-      <NewsSideBar newsUrl={newsUrl} newsBody={newsBody} />
+      <NewsSideBar
+        aiSolution={aiSolution}
+        aiRelated={aiRelated}
+        newsUrl={newsUrl}
+      />
     </PageLayout>
   );
 };
