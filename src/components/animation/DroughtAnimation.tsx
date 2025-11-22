@@ -135,9 +135,13 @@ const DroughtAnimation = () => {
       });
     }
 
-    // Worley/Voronoi edge detection for crack lines
-    const getCrackPattern = (x: number, y: number): number => {
-      // Find distances to nearest seed points
+    // PRE-COMPUTE crack patterns once (huge performance gain)
+    const crackIntensities = new Float32Array(vertices.length / 3);
+    for (let i = 0; i < vertices.length; i += 3) {
+      const x = vertices[i];
+      const y = vertices[i + 1];
+
+      // Worley/Voronoi edge detection
       let minDist1 = Infinity;
       let minDist2 = Infinity;
 
@@ -154,18 +158,16 @@ const DroughtAnimation = () => {
         }
       }
 
-      // Crack exists at cell boundaries (where distance difference is small)
       const edgeDistance = minDist2 - minDist1;
 
-      // Thin crack threshold
       if (edgeDistance < 0.15) {
-        // Normalize to 0-1, where 1 = center of crack
         const crackIntensity = 1 - edgeDistance / 0.15;
-        return crackIntensity * crackIntensity; // Square for sharper cracks
+        crackIntensities[i / 3] = crackIntensity * crackIntensity;
+      } else {
+        crackIntensities[i / 3] = 0;
       }
-
-      return 0;
-    };
+    }
+    ground.userData.crackIntensities = crackIntensities;
 
     // Dust particles
     const particleCount = 2000;
@@ -348,6 +350,23 @@ const DroughtAnimation = () => {
       const geoPositions = groundGeometry.attributes.position
         .array as Float32Array;
       const originalHeights = ground.userData.originalHeights as Float32Array;
+      const crackIntensities = ground.userData.crackIntensities as Float32Array;
+
+      // Calculate bounding box for water effects (optimization)
+      const hasWater = waterDropsRef.current.length > 0;
+      let minWaterX = Infinity,
+        maxWaterX = -Infinity;
+      let minWaterY = Infinity,
+        maxWaterY = -Infinity;
+
+      if (hasWater) {
+        for (const drop of waterDropsRef.current) {
+          minWaterX = Math.min(minWaterX, drop.position.x - drop.radius);
+          maxWaterX = Math.max(maxWaterX, drop.position.x + drop.radius);
+          minWaterY = Math.min(minWaterY, drop.position.y - drop.radius);
+          maxWaterY = Math.max(maxWaterY, drop.position.y + drop.radius);
+        }
+      }
 
       for (let i = 0; i < colors.length; i += 3) {
         const vertexIndex = i / 3;
@@ -372,36 +391,41 @@ const DroughtAnimation = () => {
         const originalHeight = originalHeights[vertexIndex];
         let targetHeight = THREE.MathUtils.lerp(originalHeight, 0, drought);
 
-        // Add crack pattern during drought
-        const crackIntensity = getCrackPattern(x, y);
+        // Add crack pattern during drought (using pre-computed values)
+        const crackIntensity = crackIntensities[vertexIndex];
         if (drought > 0.3 && crackIntensity > 0) {
-          // Cracks appear and deepen as drought progresses
           const droughtCrackFactor = Math.max(0, (drought - 0.3) / 0.7);
           const crackDepth = crackIntensity * droughtCrackFactor * 0.6;
 
           targetHeight -= crackDepth;
 
           // Darken crack areas
-          targetR *= 1 - crackIntensity * droughtCrackFactor * 0.6;
-          targetG *= 1 - crackIntensity * droughtCrackFactor * 0.6;
-          targetB *= 1 - crackIntensity * droughtCrackFactor * 0.6;
-
-          // Add slight random variation for texture
-          targetHeight += (Math.random() - 0.5) * 0.02 * droughtCrackFactor;
-        } else if (drought > 0.3) {
-          // Subtle surface variation on dry land
-          targetHeight += (Math.random() - 0.5) * 0.03 * drought;
+          const darkenFactor = 1 - crackIntensity * droughtCrackFactor * 0.6;
+          targetR *= darkenFactor;
+          targetG *= darkenFactor;
+          targetB *= darkenFactor;
         }
 
-        // Water effects - stronger restoration
+        // Water effects - with bounding box optimization
         let maxWaterEffect = 0;
-        for (const drop of waterDropsRef.current) {
-          const dist = Math.sqrt(
-            Math.pow(x - drop.position.x, 2) + Math.pow(y - drop.position.y, 2)
-          );
-          if (dist < drop.radius) {
-            const effect = (1 - dist / drop.radius) * (1 - drop.age / 2);
-            maxWaterEffect = Math.max(maxWaterEffect, effect);
+        if (
+          hasWater &&
+          x >= minWaterX &&
+          x <= maxWaterX &&
+          y >= minWaterY &&
+          y <= maxWaterY
+        ) {
+          for (const drop of waterDropsRef.current) {
+            const dx = x - drop.position.x;
+            const dy = y - drop.position.y;
+            const distSq = dx * dx + dy * dy;
+            const radiusSq = drop.radius * drop.radius;
+
+            if (distSq < radiusSq) {
+              const dist = Math.sqrt(distSq);
+              const effect = (1 - dist / drop.radius) * (1 - drop.age / 2);
+              maxWaterEffect = Math.max(maxWaterEffect, effect);
+            }
           }
         }
 
