@@ -201,7 +201,7 @@ const DroughtAnimation = () => {
     scene.add(particles);
     particles.userData.velocities = particleVelocities;
 
-    // Water puddles
+    // Water puddles group
     const waterPuddles = new THREE.Group();
     scene.add(waterPuddles);
 
@@ -221,13 +221,14 @@ const DroughtAnimation = () => {
         const worldPoint = intersects[0].point;
         const localPoint = ground.worldToLocal(worldPoint.clone());
 
+        // Logical water drop for terrain deformation
         waterDropsRef.current.push({
           position: localPoint.clone(),
           age: 0,
           radius: 0,
         });
 
-        // Water splash
+        // Visual Effect 1: Splash Ring
         const splashGeometry = new THREE.CircleGeometry(0.15, 32);
         const splashMaterial = new THREE.MeshBasicMaterial({
           color: 0x4da6ff,
@@ -239,25 +240,16 @@ const DroughtAnimation = () => {
         splash.position.copy(worldPoint);
         splash.position.y += 0.08;
         splash.rotation.x = -Math.PI / 2;
+
+        // Store animation state in userData
+        splash.userData = {
+          type: "splash",
+          scale: 0.1,
+          opacity: 0.9,
+        };
         waterPuddles.add(splash);
 
-        let scale = 0.1;
-        const animateSplash = () => {
-          scale += 0.2;
-          splash.scale.set(scale, scale, 1);
-          splashMaterial.opacity -= 0.025;
-
-          if (splashMaterial.opacity > 0) {
-            requestAnimationFrame(animateSplash);
-          } else {
-            waterPuddles.remove(splash);
-            splashGeometry.dispose();
-            splashMaterial.dispose();
-          }
-        };
-        animateSplash();
-
-        // Water droplets
+        // Visual Effect 2: Water Droplets
         for (let i = 0; i < 30; i++) {
           const dropletGeometry = new THREE.SphereGeometry(0.06, 8, 8);
           const dropletMaterial = new THREE.MeshStandardMaterial({
@@ -268,28 +260,20 @@ const DroughtAnimation = () => {
           const droplet = new THREE.Mesh(dropletGeometry, dropletMaterial);
           droplet.position.copy(worldPoint);
           droplet.position.y += 2;
-          waterPuddles.add(droplet);
 
+          // Random velocity
           const velocity = new THREE.Vector3(
             (Math.random() - 0.5) * 0.15,
             -0.15,
             (Math.random() - 0.5) * 0.15
           );
 
-          const animateDroplet = () => {
-            droplet.position.add(velocity);
-            velocity.y -= 0.01;
-            dropletMaterial.opacity -= 0.025;
-
-            if (droplet.position.y > 0 && dropletMaterial.opacity > 0) {
-              requestAnimationFrame(animateDroplet);
-            } else {
-              waterPuddles.remove(droplet);
-              dropletGeometry.dispose();
-              dropletMaterial.dispose();
-            }
+          droplet.userData = {
+            type: "droplet",
+            velocity: velocity,
+            opacity: 0.8,
           };
-          animateDroplet();
+          waterPuddles.add(droplet);
         }
       }
     };
@@ -320,7 +304,7 @@ const DroughtAnimation = () => {
 
       sunLight.intensity = 1.0 + drought * 1.5;
 
-      // Particles
+      // Particles update
       const pPos = particleGeometry.attributes.position.array as Float32Array;
       const pVel = particles.userData.velocities as number[];
 
@@ -339,12 +323,45 @@ const DroughtAnimation = () => {
       particleGeometry.attributes.position.needsUpdate = true;
       particleMaterial.opacity = Math.min(drought * 0.8, 0.7);
 
-      // Update water drops
+      // Update logical water drops
       waterDropsRef.current = waterDropsRef.current.filter((drop) => {
         drop.age += 0.016;
         drop.radius = Math.min(drop.radius + 0.15, 6);
         return drop.age < 2;
       });
+
+      // Update visual water effects (Splashes & Droplets)
+      // Iterate backwards to safely remove items
+      for (let i = waterPuddles.children.length - 1; i >= 0; i--) {
+        const obj = waterPuddles.children[i] as THREE.Mesh;
+        const data = obj.userData;
+
+        if (data.type === "splash") {
+          data.scale += 0.2;
+          data.opacity -= 0.025;
+
+          obj.scale.set(data.scale, data.scale, 1);
+          (obj.material as THREE.MeshBasicMaterial).opacity = data.opacity;
+
+          if (data.opacity <= 0) {
+            waterPuddles.remove(obj);
+            obj.geometry.dispose();
+            (obj.material as THREE.Material).dispose();
+          }
+        } else if (data.type === "droplet") {
+          obj.position.add(data.velocity);
+          data.velocity.y -= 0.01; // Gravity
+          data.opacity -= 0.025;
+
+          (obj.material as THREE.MeshStandardMaterial).opacity = data.opacity;
+
+          if (obj.position.y <= 0 || data.opacity <= 0) {
+            waterPuddles.remove(obj);
+            obj.geometry.dispose();
+            (obj.material as THREE.Material).dispose();
+          }
+        }
+      }
 
       // Ground update
       const geoColors = groundGeometry.attributes.color.array as Float32Array;
@@ -485,16 +502,40 @@ const DroughtAnimation = () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      if (container && renderer.domElement) {
-        container.removeChild(renderer.domElement);
-      }
 
+      // Dispose of visual effects
+      waterPuddles.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry.dispose();
+          if (obj.material instanceof THREE.Material) {
+            obj.material.dispose();
+          }
+        }
+      });
+      scene.remove(waterPuddles);
+
+      // Dispose of main objects
       controls.dispose();
       groundGeometry.dispose();
       groundMaterial.dispose();
       particleGeometry.dispose();
       particleMaterial.dispose();
+
+      // Dispose of scene
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry.dispose();
+          if (object.material instanceof THREE.Material) {
+            object.material.dispose();
+          }
+        }
+      });
+
       renderer.dispose();
+
+      if (container && renderer.domElement) {
+        container.removeChild(renderer.domElement);
+      }
     };
   }, []);
 
