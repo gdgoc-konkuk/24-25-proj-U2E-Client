@@ -16,6 +16,7 @@ interface GlobeProps {
 const Globe = ({ pinList }: GlobeProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [screenPins, setScreenPins] = useState<ScreenPin[]>([]);
+  const [hoveredPinId, setHoveredPinId] = useState<number | null>(null);
 
   // Three.js 기반 지구본 초기화 및 렌더링
   useEffect(() => {
@@ -109,13 +110,21 @@ const Globe = ({ pinList }: GlobeProps) => {
         const pinData = pinList?.find((p) => p.pinId === screenPin.pinId);
         if (!pinData) return null;
 
+        const isHovered = hoveredPinId === screenPin.pinId;
+
         return (
           <PinOverlayPositioner
             key={screenPin.pinId}
             x={screenPin.x}
             y={screenPin.y}
+            $isHovered={isHovered} // ✅ 추가
           >
-            <Warning pin={pinData} />
+            <Warning
+              pin={pinData}
+              onHoverChange={(hover) =>
+                setHoveredPinId(hover ? pinData.pinId : null)
+              }
+            />
           </PinOverlayPositioner>
         );
       })}
@@ -126,21 +135,29 @@ const Globe = ({ pinList }: GlobeProps) => {
 const GlobeContainer = styled.div`
   width: 100%;
   height: 100%;
-  position: "relative";
+  position: relative;
 `;
 
-const PinOverlayPositioner = styled.div.attrs<{ x: number; y: number }>(
-  (props) => ({
-    style: {
-      left: `${props.x}px`,
-      top: `${props.y}px`,
-    },
-  })
-)`
+const PinOverlayPositioner = styled.div.attrs<{
+  x: number;
+  y: number;
+  $isHovered: boolean;
+}>((props) => ({
+  style: {
+    left: `${props.x}px`,
+    top: `${props.y}px`,
+  },
+}))<{
+  x: number;
+  y: number;
+  $isHovered: boolean;
+}>`
   position: absolute;
   transform: translate(-50%, -50%);
   pointer-events: auto;
-  z-index: 1000;
+
+  /* ✅ hover된 핀 전체를 한 층 위로 */
+  z-index: ${({ $isHovered }) => ($isHovered ? 2000 : 1000)};
 `;
 
 export default Globe;

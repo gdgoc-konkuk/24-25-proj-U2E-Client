@@ -14,5 +14,10 @@ export const usePinQuery = (
     queryKey: ["pins", { region, climate }],
     queryFn: () => fetchPinList({ region, climate }),
     staleTime: 1000 * 60 * 500,
+    select: (pins) => {
+      // id 기준으로 정렬
+      const sorted = [...pins].sort((a, b) => b.pinId - a.pinId);
+      return sorted.slice(0, 70);
+    },
   });
 };
