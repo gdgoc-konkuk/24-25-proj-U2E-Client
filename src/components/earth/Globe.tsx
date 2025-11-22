@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import styled from "styled-components";
@@ -15,10 +15,22 @@ interface GlobeProps {
 
 const Globe = ({ pinList }: GlobeProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
-  // 핀의 DOM 요소들을 저장할 Ref 객체 (리렌더링 유발 X)
+
+  // 모든 핀 DIV ref
   const pinRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
-  // Three.js 관련 객체들을 저장할 Refs
+  // 현재 hover된 pinId (React state)
+  const [hoveredPinId, setHoveredPinId] = useState<number | null>(null);
+
+  // hoveredPinId를 animation loop에서 읽기 위한 ref
+  const hoveredPinIdRef = useRef<number | null>(null);
+
+  // hoveredPinId가 바뀌면 ref에 업데이트
+  useEffect(() => {
+    hoveredPinIdRef.current = hoveredPinId;
+  }, [hoveredPinId]);
+
+  // Three.js objects
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -27,7 +39,7 @@ const Globe = ({ pinList }: GlobeProps) => {
   const pinObjsRef = useRef<{ mesh: THREE.Object3D; data: Pin }[]>([]);
   const animationFrameIdRef = useRef<number | null>(null);
 
-  // 1. 초기화 Effect (한 번만 실행)
+  // 1) 초기화 useEffect (한 번만 실행)
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
@@ -65,7 +77,7 @@ const Globe = ({ pinList }: GlobeProps) => {
     scene.add(globeGroup);
     globeGroupRef.current = globeGroup;
 
-    // Globe Geometry & Material
+    // Globe Geometry
     const globeGeometry = new THREE.SphereGeometry(2, 32, 32);
     const lineMaterial = new THREE.LineBasicMaterial({
       color: "#8becff",
@@ -76,23 +88,31 @@ const Globe = ({ pinList }: GlobeProps) => {
     const globeWireframe = new THREE.LineSegments(edges, lineMaterial);
     globeGroup.add(globeWireframe);
 
-    // Stars
+    const blackGlobeGeometry = new THREE.SphereGeometry(1.98, 32, 32);
+    const fillMaterial = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.4,
+    });
+    const globeMesh = new THREE.Mesh(blackGlobeGeometry, fillMaterial);
+    globeGroup.add(globeMesh);
+
+    // Starfield
     const stars = generateStarfield({ numStars: 1000 });
     scene.add(stars);
 
-    // GeoMap
+    // GeoMap 로딩
     loadGeoMap({
       geoJsonUrl: "/land.json",
       radius: 2,
       onLoaded: (geoObj) => {
-        // 컴포넌트가 마운트된 상태인지 확인 (Ref가 유효한지)
         if (globeGroupRef.current) {
           globeGroupRef.current.add(geoObj);
         }
       },
     });
 
-    // Reusable Vectors for Animation Loop
+    // Reusable vectors
     const tempV = new THREE.Vector3();
     const cameraPos = new THREE.Vector3();
     const meshPos = new THREE.Vector3();
@@ -103,69 +123,64 @@ const Globe = ({ pinList }: GlobeProps) => {
     const animate = () => {
       animationFrameIdRef.current = requestAnimationFrame(animate);
 
-      if (globeGroupRef.current) globeGroupRef.current.rotation.y += 0.001;
-      if (controlsRef.current) controlsRef.current.update();
+      // 회전
+      globeGroupRef.current!.rotation.y += 0.001;
 
-      if (cameraRef.current && rendererRef.current && sceneRef.current) {
-        const camera = cameraRef.current;
+      // 컨트롤 업데이트
+      controlsRef.current!.update();
 
-        // 카메라 위치 캐싱
-        cameraPos.copy(camera.position);
+      // 카메라 위치
+      cameraPos.copy(camera.position);
 
-        // 핀 위치 업데이트 및 Occlusion Culling
-        pinObjsRef.current.forEach(({ mesh, data }) => {
-          const el = pinRefs.current[data.pinId];
-          if (!el) return;
+      // 모든 핀 화면 위치 갱신 + z-index 계산
+      pinObjsRef.current.forEach(({ mesh, data }) => {
+        const el = pinRefs.current[data.pinId];
+        if (!el) return;
 
-          // 1. 월드 위치 가져오기
-          mesh.getWorldPosition(meshPos);
+        mesh.getWorldPosition(meshPos);
+        meshNormal.copy(meshPos).normalize();
+        vectorToCamera.subVectors(cameraPos, meshPos).normalize();
 
-          // 2. 가시성 판단 (Dot Product)
-          // 지구 중심(0,0,0)에서 핀까지의 벡터(meshPos - 0)는 meshPos 그 자체 (정규화 필요)
-          meshNormal.copy(meshPos).normalize();
-          vectorToCamera.subVectors(cameraPos, meshPos).normalize();
+        const dot = meshNormal.dot(vectorToCamera);
+        const isFacingCamera = dot > 0.1;
 
-          const dot = meshNormal.dot(vectorToCamera);
-          const isFacingCamera = dot > 0.1; // 여유값
+        if (isFacingCamera) {
+          tempV.copy(meshPos).project(camera);
 
-          if (isFacingCamera) {
-            // 화면 좌표 변환
-            // meshPos는 이미 getWorldPosition으로 업데이트됨.
-            // project는 meshPos를 NDC(-1 ~ 1)로 변환함.
-            tempV.copy(meshPos).project(camera);
+          const isInFrustum =
+            tempV.x >= -1 && tempV.x <= 1 && tempV.y >= -1 && tempV.y <= 1;
 
-            // Frustum Check (화면 안에 있는지)
-            const isInFrustum =
-              tempV.x >= -1 && tempV.x <= 1 && tempV.y >= -1 && tempV.y <= 1;
+          if (isInFrustum) {
+            const x = (tempV.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (tempV.y * -0.5 + 0.5) * window.innerHeight;
 
-            if (isInFrustum) {
-              const x = (tempV.x * 0.5 + 0.5) * window.innerWidth;
-              const y = (tempV.y * -0.5 + 0.5) * window.innerHeight;
+            el.style.transform = `translate(-50%, -50%) translate3d(${x}px, ${y}px, 0)`;
+            el.style.opacity = "1";
+            el.style.pointerEvents = "auto";
 
-              el.style.transform = `translate(-50%, -50%) translate3d(${x}px, ${y}px, 0)`;
-              el.style.opacity = "1";
-              el.style.pointerEvents = "auto";
-              el.style.zIndex = "1";
-            } else {
-              el.style.opacity = "0";
-              el.style.pointerEvents = "none";
-              el.style.zIndex = "-1";
-            }
+            // hover된 핀은 z-index 최상단
+            el.style.zIndex =
+              data.pinId === hoveredPinIdRef.current ? "2000" : "1";
           } else {
             el.style.opacity = "0";
             el.style.pointerEvents = "none";
             el.style.zIndex = "-1";
           }
-        });
+        } else {
+          el.style.opacity = "0";
+          el.style.pointerEvents = "none";
+          el.style.zIndex = "-1";
+        }
+      });
 
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
-      }
+      renderer.render(scene, camera);
     };
+
     animate();
 
-    // Resize Handler
+    // Resize
     const handleResize = () => {
-      if (!container || !cameraRef.current || !rendererRef.current) return;
+      if (!cameraRef.current || !rendererRef.current) return;
       const newWidth = window.innerWidth;
       const newHeight = window.innerHeight;
 
@@ -173,9 +188,9 @@ const Globe = ({ pinList }: GlobeProps) => {
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(newWidth, newHeight);
     };
+
     window.addEventListener("resize", handleResize);
 
-    // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize);
       if (animationFrameIdRef.current)
@@ -189,26 +204,19 @@ const Globe = ({ pinList }: GlobeProps) => {
         container.removeChild(rendererRef.current.domElement);
       }
 
-      // Dispose Resources
+      rendererRef.current?.dispose();
       globeGeometry.dispose();
       lineMaterial.dispose();
       edges.dispose();
-
-      // Note: GeoMap and Stars disposal logic might need to be added to their respective modules or handled here if they return disposables.
-
-      rendererRef.current?.dispose();
     };
-  }, []); // Empty dependency array: run once
+  }, []);
 
-  // 2. 핀 업데이트 Effect (pinList 변경 시 실행)
   useEffect(() => {
     const globeGroup = globeGroupRef.current;
     if (!globeGroup || !pinList) return;
 
     // 기존 핀 제거
-    pinObjsRef.current.forEach(({ mesh }) => {
-      globeGroup.remove(mesh);
-    });
+    pinObjsRef.current.forEach(({ mesh }) => globeGroup.remove(mesh));
     pinObjsRef.current = [];
 
     // 새 핀 생성
@@ -224,19 +232,17 @@ const Globe = ({ pinList }: GlobeProps) => {
 
   return (
     <GlobeContainer ref={mountRef}>
-      {/* React는 핀 요소들을 한 번만 렌더링합니다. 
-        위치는 animate 루프에서 ref를 통해 직접 제어됩니다.
-      */}
       {pinList?.map((pin) => (
         <PinOverlayPositioner
           key={pin.pinId}
           ref={(el) => {
-            if (pinRefs.current) {
-              pinRefs.current[pin.pinId] = el;
-            }
+            pinRefs.current[pin.pinId] = el;
           }}
         >
-          <Warning pin={pin} />
+          <Warning
+            pin={pin}
+            onHoverChange={(hover) => setHoveredPinId(hover ? pin.pinId : null)}
+          />
         </PinOverlayPositioner>
       ))}
     </GlobeContainer>
@@ -250,12 +256,11 @@ const GlobeContainer = styled.div`
   overflow: hidden;
 `;
 
-// style 속성을 제거하고, CSS transform을 통한 이동을 위해 초기 스타일 설정
 const PinOverlayPositioner = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  will-change: transform, opacity; /* 브라우저에게 최적화 힌트 제공 */
+  will-change: transform, opacity;
   pointer-events: none;
 `;
 
