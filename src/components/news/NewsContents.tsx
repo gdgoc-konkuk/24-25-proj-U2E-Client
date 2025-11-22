@@ -41,15 +41,17 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
               {regionList.map((region, index) => (
                 <LocationText key={`region-${index}`}>{region}</LocationText>
               ))}
-              {climateList.map((climate, index) => (
-                <ClimateTag
-                  key={`climate-${index}`}
-                  $isActive={currentFilter === climate}
-                  onClick={() => handleClimateClick(climate)}
-                >
-                  {climate}
-                </ClimateTag>
-              ))}
+              <ClimateTagContainer>
+                {climateList.map((climate, index) => (
+                  <ClimateTag
+                    key={`climate-${index}`}
+                    $isActive={currentFilter === climate}
+                    onClick={() => handleClimateClick(climate)}
+                  >
+                    {climate}
+                  </ClimateTag>
+                ))}
+              </ClimateTagContainer>
             </TagContainer>
           </LocationContainer>
         </HeaderContainer>
@@ -102,7 +104,14 @@ const LocationText = styled.div`
 
 const TagContainer = styled.div`
   gap: 10px;
-  ${rowFlex({ justify: "center", align: "center" })}
+  width: 100%;
+  ${rowFlex({ justify: "space", align: "center" })}
+`;
+
+const ClimateTagContainer = styled.div`
+  gap: 10px;
+  width: 100%;
+  ${rowFlex({ justify: "end", align: "center" })}
 `;
 
 const ClimateTag = styled.div<{ $isActive: boolean }>`
