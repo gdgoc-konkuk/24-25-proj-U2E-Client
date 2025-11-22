@@ -1,25 +1,21 @@
-import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { rowFlex } from "../../../styles/flexStyles";
 import { useSearchParams } from "react-router-dom";
 import { climateIcons } from "../../../constants/climateIcons";
+import { Climate } from "../../../types/climate";
 
 const FilterBar = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialFilter = searchParams.get("filter");
-  const [activeFilter, setActiveFilter] = useState<string | null>(
-    initialFilter
-  );
+  const currentFilter = searchParams.get("filter");
 
-  useEffect(() => {
-    const newParams = new URLSearchParams(searchParams);
-    if (activeFilter) {
-      newParams.set("filter", activeFilter);
+  const handleFilterClick = (id: Climate) => {
+    if (currentFilter === id) {
+      searchParams.delete("filter");
+      setSearchParams(searchParams);
     } else {
-      newParams.delete("filter");
+      setSearchParams({ filter: id });
     }
-    setSearchParams(newParams);
-  }, [activeFilter]);
+  };
 
   return (
     <FilterContainer>
@@ -27,8 +23,8 @@ const FilterBar = () => {
         return (
           <IconWrapper
             key={id}
-            $active={activeFilter === id}
-            onClick={() => setActiveFilter(activeFilter === id ? null : id)}
+            $active={currentFilter === id}
+            onClick={() => handleFilterClick(id)}
           >
             <Icon />
           </IconWrapper>
