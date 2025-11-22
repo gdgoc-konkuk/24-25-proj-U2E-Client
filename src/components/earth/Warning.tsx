@@ -92,6 +92,8 @@ const MiniCard = styled.div`
   z-index: 2; // 컨테이너 안에서만 위로
   backdrop-filter: blur(4px);
 
+  overflow: hidden;
+
   /* ✅ 기본값: 안 보이고 클릭도 안 됨 */
   opacity: 0;
   pointer-events: none;
