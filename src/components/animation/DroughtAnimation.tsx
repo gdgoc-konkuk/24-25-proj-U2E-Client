@@ -56,6 +56,7 @@ const DroughtAnimation = () => {
     controls.maxPolarAngle = Math.PI / 2.2;
     controls.minDistance = 8;
     controls.maxDistance = 35;
+    controls.enableZoom = false;
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -544,7 +545,7 @@ const DroughtAnimation = () => {
 
 const Container = styled.div`
   width: 100%;
-  height: 100%;
+  height: 100vh;
   position: relative;
   overflow: hidden;
   cursor: pointer;

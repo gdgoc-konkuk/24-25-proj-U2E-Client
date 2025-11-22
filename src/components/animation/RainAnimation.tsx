@@ -186,7 +186,7 @@ const RainAnimation = ({
 // 애니메이션을 포함할 컨테이너 스타일 정의
 const Container = styled.div`
   width: 100%;
-  height: 100%;
+  height: 100vh;
   position: relative;
   overflow: hidden;
 `;

@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { colFlex, rowFlex } from "../../styles/flexStyles";
 import theme from "../../styles/theme";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import NewsSideBar from "./NewsSideBar";
 
 interface NewsContentsProps {
@@ -10,6 +10,9 @@ interface NewsContentsProps {
 
 const NewsContents = ({ newsData }: NewsContentsProps) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentFilter = searchParams.get("filter");
+
   const {
     climateList,
     regionList,
@@ -21,6 +24,10 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
     aiSolution,
     aiRelated,
   } = newsData;
+
+  const handleClimateClick = (climate: string) => {
+    setSearchParams({ filter: climate });
+  };
 
   return (
     <PageLayout>
@@ -34,9 +41,17 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
               {regionList.map((region, index) => (
                 <LocationText key={`region-${index}`}>{region}</LocationText>
               ))}
-              {climateList.map((climate, index) => (
-                <ClimateTag key={`climate-${index}`}>{climate}</ClimateTag>
-              ))}
+              <ClimateTagContainer>
+                {climateList.map((climate, index) => (
+                  <ClimateTag
+                    key={`climate-${index}`}
+                    $isActive={currentFilter === climate}
+                    onClick={() => handleClimateClick(climate)}
+                  >
+                    {climate}
+                  </ClimateTag>
+                ))}
+              </ClimateTagContainer>
             </TagContainer>
           </LocationContainer>
         </HeaderContainer>
@@ -56,7 +71,6 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
 
 const PageLayout = styled.div`
   width: 100%;
-  height: 100%;
   gap: 10px;
   ${rowFlex({ justify: "center", align: "start" })}
 `;
@@ -64,7 +78,6 @@ const PageLayout = styled.div`
 const Container = styled.article`
   flex: 7;
   padding: 30px 50px;
-  height: 100%;
   ${colFlex({ align: "center" })}
 `;
 
@@ -82,22 +95,36 @@ const LocationContainer = styled.div`
 
 const LocationText = styled.div`
   font-size: 18px;
-  background-color: ${theme.colors.primary};
   padding: 5px 10px;
   border-radius: 15px;
+  border: 1px solid ${theme.colors.white};
 `;
 
 const TagContainer = styled.div`
   gap: 10px;
-  ${rowFlex({ justify: "center", align: "center" })}
+  width: 100%;
+  ${rowFlex({ justify: "space", align: "center" })}
 `;
 
-const ClimateTag = styled.div`
+const ClimateTagContainer = styled.div`
+  gap: 10px;
+  width: 100%;
+  ${rowFlex({ justify: "end", align: "center" })}
+`;
+
+const ClimateTag = styled.div<{ $isActive: boolean }>`
   font-size: 18px;
-  background-color: ${theme.colors.secondary};
+  background-color: ${({ $isActive }) => $isActive && theme.colors.primary};
   padding: 5px 10px;
   border-radius: 15px;
+  border: 1px solid ${theme.colors.primary};
   color: ${theme.colors.textPrimary};
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${theme.colors.primary};
+  }
 `;
 
 const NavigationArrow = styled.div`
