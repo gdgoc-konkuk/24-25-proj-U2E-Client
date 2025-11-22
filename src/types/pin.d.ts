@@ -1,5 +1,6 @@
 export interface Pin {
   pinId: number;
+  newsId: number;
   latitude: number;
   longitude: number;
   region: string;

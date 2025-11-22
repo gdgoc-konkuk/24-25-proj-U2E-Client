@@ -5,6 +5,11 @@ interface RecentNews {
   newsTitle: string;
 }
 
+interface AIRelated {
+  title: string;
+  url: string;
+}
+
 interface News {
   climateList: string[];
   regionList: string[];
@@ -13,4 +18,6 @@ interface News {
   newsImageUrl: string;
   newsBody: string;
   newsDate: string;
+  aiSolution: string;
+  aiRelated: AIRelated[];
 }
