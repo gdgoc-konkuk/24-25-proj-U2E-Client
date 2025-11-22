@@ -84,7 +84,7 @@ const FineDustAnimation = () => {
       1000
     );
     // 45-degree top-down view
-    camera.position.set(0, 12, 12);
+    camera.position.set(15, 15, 20);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
@@ -111,6 +111,7 @@ const FineDustAnimation = () => {
     controls.maxDistance = 30;
     controls.maxPolarAngle = Math.PI / 2 - 0.1; // Don't go below ground
     controls.target.set(0, 0, 0);
+    controls.enableZoom = false;
 
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
@@ -401,7 +402,7 @@ const FineDustAnimation = () => {
 
 const Container = styled.div`
   width: 100%;
-  height: 100%;
+  height: 100vh;
   position: relative;
   overflow: hidden;
   cursor: default;

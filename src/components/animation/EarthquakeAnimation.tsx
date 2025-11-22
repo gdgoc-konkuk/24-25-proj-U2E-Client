@@ -89,7 +89,7 @@ const EarthquakeAnimation = () => {
       1000
     );
     // 45-degree top-down view
-    camera.position.set(0, 15, 15);
+    camera.position.set(0, 20, 19);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
@@ -108,12 +108,12 @@ const EarthquakeAnimation = () => {
     // Controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enablePan = false;
-    controls.enableZoom = true;
     controls.enableRotate = true;
     controls.minDistance = 5;
     controls.maxDistance = 40;
     controls.maxPolarAngle = Math.PI / 2 - 0.1;
     controls.target.set(0, 0, 0);
+    controls.enableZoom = false;
 
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
@@ -384,7 +384,7 @@ const EarthquakeAnimation = () => {
 
 const Container = styled.div`
   width: 100%;
-  height: 100%;
+  height: 100vh;
   position: relative;
   overflow: hidden;
   cursor: crosshair;

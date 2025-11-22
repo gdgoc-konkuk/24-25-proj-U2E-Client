@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -51,7 +51,6 @@ const SlowBurnWildfire = () => {
     // 1. Scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(PALETTE.bg);
-    scene.fog = new THREE.FogExp2(PALETTE.bg, 0.03);
 
     const camera = new THREE.PerspectiveCamera(
       50,
@@ -59,7 +58,7 @@ const SlowBurnWildfire = () => {
       0.1,
       1000
     );
-    camera.position.set(-20, 20, 20); // 줌인 상태 유지
+    camera.position.set(-30, 30, 30); // 줌인 상태 유지
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
@@ -191,6 +190,7 @@ const SlowBurnWildfire = () => {
     controls.enableDamping = true;
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
+    controls.enableZoom = false;
 
     const onMouseDown = (e: MouseEvent) =>
       (mouseStart.current = { x: e.clientX, y: e.clientY });
@@ -381,12 +381,13 @@ const SlowBurnWildfire = () => {
 
 const Container = styled.div`
   width: 100%;
-  height: 100%;
-  background: #000;
+  height: 100vh;
   overflow: hidden;
+  position: relative; /* For absolute canvas and sticky UI */
 `;
+
 const StatusPanel = styled.div`
-  position: absolute;
+  position: sticky;
   top: 50%;
   left: 20px;
   transform: translateY(-50%);
@@ -395,6 +396,7 @@ const StatusPanel = styled.div`
   gap: 8px;
   pointer-events: none;
 `;
+
 const StatusItem = styled.div<{ color: string }>`
   font-family: monospace;
   font-weight: bold;

@@ -71,7 +71,6 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
 
 const PageLayout = styled.div`
   width: 100%;
-  height: 100%;
   gap: 10px;
   ${rowFlex({ justify: "center", align: "start" })}
 `;
@@ -79,7 +78,6 @@ const PageLayout = styled.div`
 const Container = styled.article`
   flex: 7;
   padding: 30px 50px;
-  height: 100%;
   ${colFlex({ align: "center" })}
 `;
 
