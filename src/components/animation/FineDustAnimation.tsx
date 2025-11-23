@@ -391,6 +391,7 @@ const FineDustAnimation = () => {
       particleGeo.dispose();
       particleMat.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
 
       if (container && renderer.domElement) {
         container.removeChild(renderer.domElement);

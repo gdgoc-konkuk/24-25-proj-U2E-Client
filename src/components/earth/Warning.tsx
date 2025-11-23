@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 
 import WarningIcon from "../../assets/svgs/Warning.svg?react";
@@ -18,16 +18,26 @@ const Warning = ({ pin, onHoverChange }: WarningProps) => {
   const [searchParams] = useSearchParams();
   const filterParam = searchParams.get("filter");
   const navigate = useNavigate();
-  const [hovered, setHovered] = useState(false);
+
+  const [showAnimation, setShowAnimation] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
-    setHovered(true);
     onHoverChange?.(true);
+
+    // Debounce animation mounting
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowAnimation(true);
+    }, 300); // 300ms delay
   };
 
   const handleMouseLeave = () => {
-    setHovered(false);
     onHoverChange?.(false);
+
+    // Cancel animation mounting if mouse leaves quickly
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setShowAnimation(false);
   };
 
   const climate =
@@ -62,7 +72,7 @@ const Warning = ({ pin, onHoverChange }: WarningProps) => {
             )}
           </Title>
           <AnimationContainer>
-            {hovered && climateMap[climate]}
+            {showAnimation && climateMap[climate]}
           </AnimationContainer>
         </MiniCard>
       </IconWrapper>

@@ -362,10 +362,28 @@ const SlowBurnWildfire = () => {
       renderer.domElement.removeEventListener("mousedown", onMouseDown);
       renderer.domElement.removeEventListener("mouseup", onMouseUp);
       cancelAnimationFrame(frameIdRef.current);
-      renderer.dispose();
-      composer.dispose();
+
+      controls.dispose();
+
+      // Dispose resources
       treeGeo.dispose();
-      treeMesh.dispose();
+      (treeMesh.material as THREE.Material).dispose();
+
+      ground.geometry.dispose();
+      (ground.material as THREE.Material).dispose();
+
+      gridHelper.geometry.dispose();
+      (gridHelper.material as THREE.Material).dispose();
+
+      pMesh.geometry.dispose();
+      (pMesh.material as THREE.Material).dispose();
+
+      ring.geometry.dispose();
+      ringMat.dispose();
+
+      composer.dispose();
+      renderer.dispose();
+      renderer.forceContextLoss();
     };
   }, []);
 

@@ -374,6 +374,7 @@ const TornadoAnimation = ({
       window.removeEventListener("resize", handleResize);
       container.removeChild(renderer.domElement);
       renderer.dispose();
+      renderer.forceContextLoss();
     };
   }, []);
 

@@ -513,8 +513,8 @@ const SeaLevelDefenseFinal = () => {
         renderer.domElement.removeEventListener("mousedown", handleClick);
       }
       if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
-      renderer.dispose();
-      composer.dispose();
+
+      // Dispose of resources first
       planeGeo.dispose();
       planeMat.dispose();
       oceanGeo.dispose();
@@ -526,6 +526,11 @@ const SeaLevelDefenseFinal = () => {
       buildingMat.dispose();
       groundMat.dispose();
       wallMat.dispose();
+
+      composer.dispose();
+      renderer.dispose();
+      renderer.forceContextLoss();
+
       if (container && renderer.domElement)
         container.removeChild(renderer.domElement);
     };
