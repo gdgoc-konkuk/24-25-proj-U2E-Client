@@ -375,11 +375,7 @@ const EarthquakeAnimation = () => {
     };
   }, []);
 
-  return (
-    <Container ref={containerRef}>
-      <Instruction>땅을 클릭하여 지진 발생</Instruction>
-    </Container>
-  );
+  return <Container ref={containerRef} />;
 };
 
 const Container = styled.div`
@@ -387,22 +383,6 @@ const Container = styled.div`
   height: 100vh;
   position: relative;
   overflow: hidden;
-  cursor: crosshair;
-`;
-
-const Instruction = styled.div`
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-family: sans-serif;
-  pointer-events: none;
-  z-index: 10;
-  font-weight: bold;
 `;
 
 export default EarthquakeAnimation;
