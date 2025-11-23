@@ -384,25 +384,35 @@ const Container = styled.div`
   height: 100vh;
   overflow: hidden;
   position: relative; /* For absolute canvas and sticky UI */
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+  }
 `;
 
 const StatusPanel = styled.div`
   position: sticky;
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
+  top: 30px;
+  left: 30px;
+  width: fit-content;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 15px;
   pointer-events: none;
+  z-index: 10;
+  padding: 20px;
 `;
 
 const StatusItem = styled.div<{ color: string }>`
-  font-family: monospace;
-  font-weight: bold;
-  font-size: 13px;
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
   color: ${(p) => p.color};
   letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 `;
 
 export default SlowBurnWildfire;
