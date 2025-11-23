@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { HEADER_HEIGHT } from "../../constants/layout";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 
 const TemperatureRiseAnimation = () => {
@@ -376,7 +377,7 @@ const TemperatureRiseAnimation = () => {
 
 const Container = styled.div`
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - ${HEADER_HEIGHT}px);
   position: relative;
   overflow: hidden;
 `;

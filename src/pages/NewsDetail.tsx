@@ -8,6 +8,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { useNewsContentsQuery } from "../hooks/useNewsQuery";
 import { climateMap } from "../constants/climateMap";
 import { Climate } from "../types/climate";
+import { HEADER_HEIGHT } from "../constants/layout";
 
 const NewsDetail = () => {
   const [searchParams] = useSearchParams();
@@ -51,9 +52,8 @@ const NewsDetail = () => {
 };
 
 const Container = styled.div`
-  padding-top: 82px;
+  padding-top: ${HEADER_HEIGHT}px;
   width: 100%;
-  height: 100vh;
   ${colFlex({ justify: "start", align: "center" })}
   overflow-y: auto;
   scroll-behavior: smooth;
@@ -79,7 +79,7 @@ const bounce = keyframes`
 
 const ScrollIndicator = styled.div`
   position: absolute;
-  bottom: 40px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;

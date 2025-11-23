@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import styled from "styled-components";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { HEADER_HEIGHT } from "../../constants/layout";
 
 interface WaterDrop {
   position: THREE.Vector3;
@@ -545,7 +546,7 @@ const DroughtAnimation = () => {
 
 const Container = styled.div`
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - ${HEADER_HEIGHT}px);
   position: relative;
   overflow: hidden;
   cursor: pointer;

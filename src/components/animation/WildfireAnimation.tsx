@@ -5,6 +5,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { HEADER_HEIGHT } from "../../constants/layout";
 
 // --- SLOW BURN CONFIG ---
 const CONFIG = {
@@ -381,7 +382,7 @@ const SlowBurnWildfire = () => {
 
 const Container = styled.div`
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - ${HEADER_HEIGHT}px);
   overflow: hidden;
   position: relative; /* For absolute canvas and sticky UI */
 
