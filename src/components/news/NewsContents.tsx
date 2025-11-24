@@ -6,9 +6,10 @@ import NewsSideBar from "./NewsSideBar";
 
 interface NewsContentsProps {
   newsData: News;
+  contentTopRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const NewsContents = ({ newsData }: NewsContentsProps) => {
+const NewsContents = ({ newsData, contentTopRef }: NewsContentsProps) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentFilter = searchParams.get("filter");
@@ -32,7 +33,7 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
   return (
     <PageLayout>
       <Container>
-        <HeaderContainer>
+        <HeaderContainer ref={contentTopRef}>
           <LocationContainer>
             <NavigationArrow
               onClick={() => navigate("/")}
@@ -84,6 +85,7 @@ const Container = styled.article`
 const HeaderContainer = styled.div`
   width: 100%;
   padding: 10px 0;
+  scroll-margin-top: 100px;
   ${rowFlex({ justify: "space", align: "center" })}
 `;
 
@@ -94,10 +96,15 @@ const LocationContainer = styled.div`
 `;
 
 const LocationText = styled.div`
-  font-size: 18px;
-  padding: 5px 10px;
-  border-radius: 15px;
-  border: 1px solid ${theme.colors.white};
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.5px;
 `;
 
 const TagContainer = styled.div`
@@ -113,17 +120,28 @@ const ClimateTagContainer = styled.div`
 `;
 
 const ClimateTag = styled.div<{ $isActive: boolean }>`
-  font-size: 18px;
-  background-color: ${({ $isActive }) => $isActive && theme.colors.primary};
-  padding: 5px 10px;
-  border-radius: 15px;
-  border: 1px solid ${theme.colors.primary};
-  color: ${theme.colors.textPrimary};
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 20px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+
+  background-color: ${({ $isActive }) =>
+    $isActive ? "rgba(16, 181, 214, 0.4)" : "rgba(255, 255, 255, 0.05)"};
+  border: 1px solid
+    ${({ $isActive }) =>
+      $isActive ? "rgba(16, 181, 214, 0.8)" : "rgba(255, 255, 255, 0.2)"};
+  color: ${({ $isActive }) =>
+    $isActive ? "#fff" : "rgba(255, 255, 255, 0.7)"};
 
   &:hover {
-    background-color: ${theme.colors.primary};
+    background-color: ${({ $isActive }) =>
+      $isActive ? "rgba(16, 181, 214, 0.6)" : "rgba(255, 255, 255, 0.15)"};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: #fff;
   }
 `;
 
@@ -135,13 +153,13 @@ const NavigationArrow = styled.div`
 const NewsTitle = styled.div`
   width: 100%;
   padding: 30px 0 10px 0;
-  font-size: 42px;
+  font-size: 36px;
   text-align: start;
 `;
 
 const NewsDate = styled.div`
   width: 100%;
-  font-size: 16px;
+  font-size: 14px;
   color: ${theme.colors.textSecondary};
   margin-bottom: 20px;
 `;
@@ -155,7 +173,7 @@ const NewsImage = styled.img`
 `;
 
 const MainContent = styled.div`
-  font-size: 20px;
+  font-size: 18px;
   overflow-wrap: break-word;
   line-height: 35px;
   padding: 20px 0;

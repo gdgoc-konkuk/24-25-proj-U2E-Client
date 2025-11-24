@@ -22,6 +22,4 @@ export type Climate =
   | "SEA_LEVEL_RISE"
   | "TYPHOON_OR_TORNADO"
   | "WILDFIRE"
-  | "EARTHQUAKE"
-  | "DEFORESTATION"
-  | "BIODIVERSITY_LOSS";
+  | "EARTHQUAKE";

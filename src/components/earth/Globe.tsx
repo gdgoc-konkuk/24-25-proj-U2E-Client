@@ -173,6 +173,9 @@ const Globe = ({ pinList }: GlobeProps) => {
         }
       });
 
+      // 0 사이즈일 경우 렌더링 방지
+      if (window.innerWidth === 0 || window.innerHeight === 0) return;
+
       renderer.render(scene, camera);
     };
 
@@ -184,9 +187,22 @@ const Globe = ({ pinList }: GlobeProps) => {
       const newWidth = window.innerWidth;
       const newHeight = window.innerHeight;
 
+      if (newWidth === 0 || newHeight === 0) return;
+
       cameraRef.current.aspect = newWidth / newHeight;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(newWidth, newHeight);
+
+      // LineMaterial resolution 업데이트 (Line2 사용 시 필요)
+      if (globeGroupRef.current) {
+        globeGroupRef.current.traverse((obj) => {
+          // @ts-ignore
+          if (obj.isLine2 && obj.material && obj.material.resolution) {
+             // @ts-ignore
+            obj.material.resolution.set(newWidth, newHeight);
+          }
+        });
+      }
     };
 
     window.addEventListener("resize", handleResize);

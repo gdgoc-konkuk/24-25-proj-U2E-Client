@@ -3,7 +3,7 @@ import RainAnimation from "../components/animation/RainAnimation";
 import { colFlex, rowFlex } from "../styles/flexStyles";
 import NewsContents from "../components/news/NewsContents";
 import ChatPanel from "../components/chat/ChatPanel";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useNewsContentsQuery } from "../hooks/useNewsQuery";
 import { climateMap } from "../constants/climateMap";
@@ -16,15 +16,22 @@ const NewsDetail = () => {
   const newsId = Number(useParams().newsId) || 1;
   const { data: response } = useNewsContentsQuery(newsId);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const contentTopRef = useRef<HTMLDivElement>(null);
+  const handleScroll = () => {
+    contentTopRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-  const climate = filterParam ?? (response?.data.climateList[0] as Climate);
+  const climateList = response?.data.climateList as Climate[] | undefined;
+  const isValidFilter = filterParam && climateList?.includes(filterParam);
+  const climate = isValidFilter ? filterParam : (climateList?.[0] as Climate);
+  
   const animation = climateMap[climate] || <RainAnimation dropNum={400} />;
 
   return (
     <Container>
       <AnimationWrapper>
         {animation}
-        <ScrollIndicator>
+        <ScrollIndicator onClick={handleScroll}>
           <span>Scroll down for the article.</span>
           <svg
             width="24"
@@ -44,7 +51,9 @@ const NewsDetail = () => {
         </ScrollIndicator>
       </AnimationWrapper>
       <ContentsContainer>
-        {response && <NewsContents newsData={response.data} />}
+        {response && (
+          <NewsContents newsData={response.data} contentTopRef={contentTopRef} />
+        )}
         <ChatPanel isVisible={isChatOpen} setIsChatOpen={setIsChatOpen} />
       </ContentsContainer>
     </Container>
@@ -87,7 +96,8 @@ const ScrollIndicator = styled.div`
   align-items: center;
   gap: 12px;
   z-index: 10;
-  pointer-events: none;
+  cursor: pointer;
+  pointer-events: auto;
 
   span {
     color: rgba(255, 255, 255, 0.8);

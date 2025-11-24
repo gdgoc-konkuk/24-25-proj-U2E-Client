@@ -6,8 +6,6 @@ import DroughtIcon from "../assets/svgs/climate/Drought.svg?react";
 import SeaLevelIcon from "../assets/svgs/climate/SeaLevel.svg?react";
 import WildfireIcon from "../assets/svgs/climate/Wildfire.svg?react";
 import EarthquakeIcon from "../assets/svgs/climate/Earthquake.svg?react";
-import DeforestationIcon from "../assets/svgs/climate/Deforestation.svg?react";
-import BiodiversityLossIcon from "../assets/svgs/climate/BiodiversityLoss.svg?react";
 
 export const climateIcons = [
   { id: "HEAVY_RAIN_OR_FLOOD", icon: RainIcon, label: "Heavy Rain / Flood" },
@@ -22,10 +20,4 @@ export const climateIcons = [
   { id: "SEA_LEVEL_RISE", icon: SeaLevelIcon, label: "Sea Level Rise" },
   { id: "WILDFIRE", icon: WildfireIcon, label: "Wildfire" },
   { id: "EARTHQUAKE", icon: EarthquakeIcon, label: "Earthquake" },
-  { id: "DEFORESTATION", icon: DeforestationIcon, label: "Deforestation" },
-  {
-    id: "BIODIVERSITY_LOSS",
-    icon: BiodiversityLossIcon,
-    label: "Biodiversity Loss",
-  },
 ] as const;
