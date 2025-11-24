@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import { rowFlex } from "../../../styles/flexStyles";
 import { useNavigate } from "react-router-dom";
+import { HEADER_HEIGHT } from "../../../constants/layout";
 import FilterBar from "./FilterBar";
 import SearchBox from "./SearchBox";
 
@@ -36,7 +37,7 @@ const HeaderContainer = styled.div`
   position: fixed;
   top: 0;
   width: 100%;
-  height: 82px;
+  height: ${HEADER_HEIGHT}px;
   ${rowFlex({ align: "center", justify: "space" })}
   padding: 0 32px;
   z-index: 999;

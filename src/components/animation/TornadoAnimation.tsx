@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import styled from "styled-components";
 import * as THREE from "three";
+import { HEADER_HEIGHT } from "../../constants/layout";
 
 interface TornadoProps {
   particleCount?: number;
@@ -373,15 +374,16 @@ const TornadoAnimation = ({
       window.removeEventListener("resize", handleResize);
       container.removeChild(renderer.domElement);
       renderer.dispose();
+      renderer.forceContextLoss();
     };
   }, []);
 
-  return <Wrapper ref={containerRef} />;
+  return <Container ref={containerRef} />;
 };
 
-const Wrapper = styled.div`
+const Container = styled.div`
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - ${HEADER_HEIGHT}px);
   position: relative;
   overflow: hidden;
 `;

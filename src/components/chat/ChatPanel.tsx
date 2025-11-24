@@ -2,6 +2,7 @@ import styled, { css, keyframes } from "styled-components";
 import Comments from "./Comments";
 import { colFlex, rowFlex } from "../../styles/flexStyles";
 import ChatPanelFrameSvg from "../../assets/svgs/ChatPanelFrame.svg?react";
+import ChatIcon from "../../assets/svgs/ChatIcon.svg?react";
 import UserInput from "./UserInput";
 import theme from "../../styles/theme";
 
@@ -14,7 +15,9 @@ function ChatPanel({ isVisible, setIsChatOpen }: ChatPanelProps) {
   return (
     <>
       {!isVisible && (
-        <ToggleButton onClick={() => setIsChatOpen(true)}>✨</ToggleButton>
+        <ToggleButton onClick={() => setIsChatOpen(true)}>
+          <ChatIcon width="24px" height="24px" />
+        </ToggleButton>
       )}
 
       <Container $isVisible={isVisible}>
@@ -90,14 +93,18 @@ const ToggleButton = styled.button`
   height: 48px;
   border-radius: 50%;
   border: 1px solid ${theme.colors.secondary};
+  background-color: rgba(0, 0, 0, 0.6);
+  color: ${theme.colors.primary};
   font-size: 24px;
   ${rowFlex({ justify: "center", align: "center" })}
   z-index: 1001;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease-in-out;
 
   &:hover {
-    opacity: 0.8;
+    background-color: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
   }
 `;
 

@@ -5,6 +5,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { HEADER_HEIGHT } from "../../constants/layout";
 
 // --- CONFIGURATION ---
 const GRID_SIZE = 16;
@@ -512,8 +513,8 @@ const SeaLevelDefenseFinal = () => {
         renderer.domElement.removeEventListener("mousedown", handleClick);
       }
       if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current);
-      renderer.dispose();
-      composer.dispose();
+
+      // Dispose of resources first
       planeGeo.dispose();
       planeMat.dispose();
       oceanGeo.dispose();
@@ -525,6 +526,11 @@ const SeaLevelDefenseFinal = () => {
       buildingMat.dispose();
       groundMat.dispose();
       wallMat.dispose();
+
+      composer.dispose();
+      renderer.dispose();
+      renderer.forceContextLoss();
+
       if (container && renderer.domElement)
         container.removeChild(renderer.domElement);
     };
@@ -566,7 +572,7 @@ const SeaLevelDefenseFinal = () => {
 // Styles
 const Container = styled.div`
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - ${HEADER_HEIGHT}px);
   background: #050510;
   overflow: hidden;
   position: relative; /* For absolute canvas and sticky UI */

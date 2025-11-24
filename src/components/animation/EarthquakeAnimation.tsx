@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import styled from "styled-components";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { HEADER_HEIGHT } from "../../constants/layout";
 
 // Performance detection
 const detectDevicePerformance = () => {
@@ -368,6 +369,7 @@ const EarthquakeAnimation = () => {
       buildingGeo.dispose();
       buildingMat.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
 
       if (container && renderer.domElement) {
         container.removeChild(renderer.domElement);
@@ -375,34 +377,14 @@ const EarthquakeAnimation = () => {
     };
   }, []);
 
-  return (
-    <Container ref={containerRef}>
-      <Instruction>땅을 클릭하여 지진 발생</Instruction>
-    </Container>
-  );
+  return <Container ref={containerRef} />;
 };
 
 const Container = styled.div`
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - ${HEADER_HEIGHT}px);
   position: relative;
   overflow: hidden;
-  cursor: crosshair;
-`;
-
-const Instruction = styled.div`
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-family: sans-serif;
-  pointer-events: none;
-  z-index: 10;
-  font-weight: bold;
 `;
 
 export default EarthquakeAnimation;

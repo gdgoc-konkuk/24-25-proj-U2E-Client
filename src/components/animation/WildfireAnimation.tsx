@@ -5,6 +5,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { HEADER_HEIGHT } from "../../constants/layout";
 
 // --- SLOW BURN CONFIG ---
 const CONFIG = {
@@ -361,10 +362,28 @@ const SlowBurnWildfire = () => {
       renderer.domElement.removeEventListener("mousedown", onMouseDown);
       renderer.domElement.removeEventListener("mouseup", onMouseUp);
       cancelAnimationFrame(frameIdRef.current);
-      renderer.dispose();
-      composer.dispose();
+
+      controls.dispose();
+
+      // Dispose resources
       treeGeo.dispose();
-      treeMesh.dispose();
+      (treeMesh.material as THREE.Material).dispose();
+
+      ground.geometry.dispose();
+      (ground.material as THREE.Material).dispose();
+
+      gridHelper.geometry.dispose();
+      (gridHelper.material as THREE.Material).dispose();
+
+      pMesh.geometry.dispose();
+      (pMesh.material as THREE.Material).dispose();
+
+      ring.geometry.dispose();
+      ringMat.dispose();
+
+      composer.dispose();
+      renderer.dispose();
+      renderer.forceContextLoss();
     };
   }, []);
 
@@ -381,28 +400,38 @@ const SlowBurnWildfire = () => {
 
 const Container = styled.div`
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - ${HEADER_HEIGHT}px);
   overflow: hidden;
   position: relative; /* For absolute canvas and sticky UI */
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+  }
 `;
 
 const StatusPanel = styled.div`
   position: sticky;
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
+  top: 30px;
+  left: 30px;
+  width: fit-content;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 15px;
   pointer-events: none;
+  z-index: 10;
+  padding: 20px;
 `;
 
 const StatusItem = styled.div<{ color: string }>`
-  font-family: monospace;
-  font-weight: bold;
-  font-size: 13px;
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
   color: ${(p) => p.color};
   letter-spacing: 1px;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 `;
 
 export default SlowBurnWildfire;

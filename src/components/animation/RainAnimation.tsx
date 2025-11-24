@@ -1,5 +1,6 @@
 import { useRef, useEffect } from "react";
 import styled from "styled-components";
+import { HEADER_HEIGHT } from "../../constants/layout";
 
 // 떨어지는 물방울의 속성을 정의하는 인터페이스
 interface Drop {
@@ -186,7 +187,7 @@ const RainAnimation = ({
 // 애니메이션을 포함할 컨테이너 스타일 정의
 const Container = styled.div`
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - ${HEADER_HEIGHT}px);
   position: relative;
   overflow: hidden;
 `;
