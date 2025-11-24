@@ -25,7 +25,7 @@ const NewsDetail = () => {
       <AnimationWrapper>
         {animation}
         <ScrollIndicator>
-          <span>아래로 스크롤 하여 뉴스 기사를 확인하세요</span>
+          <span>Scroll down for the article.</span>
           <svg
             width="24"
             height="24"
