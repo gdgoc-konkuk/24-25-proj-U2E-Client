@@ -21,7 +21,10 @@ const NewsDetail = () => {
     contentTopRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const climate = filterParam ?? (response?.data.climateList[0] as Climate);
+  const climateList = response?.data.climateList as Climate[] | undefined;
+  const isValidFilter = filterParam && climateList?.includes(filterParam);
+  const climate = isValidFilter ? filterParam : (climateList?.[0] as Climate);
+  
   const animation = climateMap[climate] || <RainAnimation dropNum={400} />;
 
   return (
