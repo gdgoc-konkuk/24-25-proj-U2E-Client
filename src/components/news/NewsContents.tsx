@@ -6,9 +6,10 @@ import NewsSideBar from "./NewsSideBar";
 
 interface NewsContentsProps {
   newsData: News;
+  contentTopRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const NewsContents = ({ newsData }: NewsContentsProps) => {
+const NewsContents = ({ newsData, contentTopRef }: NewsContentsProps) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentFilter = searchParams.get("filter");
@@ -32,7 +33,7 @@ const NewsContents = ({ newsData }: NewsContentsProps) => {
   return (
     <PageLayout>
       <Container>
-        <HeaderContainer>
+        <HeaderContainer ref={contentTopRef}>
           <LocationContainer>
             <NavigationArrow
               onClick={() => navigate("/")}
@@ -84,6 +85,7 @@ const Container = styled.article`
 const HeaderContainer = styled.div`
   width: 100%;
   padding: 10px 0;
+  scroll-margin-top: 100px;
   ${rowFlex({ justify: "space", align: "center" })}
 `;
 
