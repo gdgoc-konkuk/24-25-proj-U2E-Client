@@ -22,9 +22,10 @@ const NewsDetail = () => {
   };
 
   const climateList = response?.data.climateList as Climate[] | undefined;
-  const isValidFilter = filterParam && climateList?.includes(filterParam);
+  //const isValidFilter = filterParam && climateList?.includes(filterParam);
+  const isValidFilter = true;
   const climate = isValidFilter ? filterParam : (climateList?.[0] as Climate);
-  
+
   const animation = climateMap[climate] || <RainAnimation dropNum={400} />;
 
   return (
@@ -52,7 +53,10 @@ const NewsDetail = () => {
       </AnimationWrapper>
       <ContentsContainer>
         {response && (
-          <NewsContents newsData={response.data} contentTopRef={contentTopRef} />
+          <NewsContents
+            newsData={response.data}
+            contentTopRef={contentTopRef}
+          />
         )}
         <ChatPanel isVisible={isChatOpen} setIsChatOpen={setIsChatOpen} />
       </ContentsContainer>
